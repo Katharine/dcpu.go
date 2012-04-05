@@ -21,19 +21,19 @@ const (
 )
 
 type DCPU16 struct {
-	memory    [0x10000]word
-	registers [8]word
-	pc        word
-	sp        word
-	o         word
+	Memory    [0x10000]word
+	Registers  [8]word // Access them using the register constants above, e.g. Registers[C]
+	PC        word
+	SP        word
+	O         word
 	skipping  bool
 	cycles    uint
 }
 
 func New() *DCPU16 {
 	cpu := new(DCPU16)
-	cpu.pc = 0
-	cpu.sp = 0xFFFF
+	cpu.PC = 0
+	cpu.SP = 0xFFFF
 	return cpu
 }
 
@@ -54,14 +54,14 @@ func (this *DCPU16) LoadStream(f io.Reader) error {
 	}
 
 	for i := 0; i < 0x10000; i++ {
-		this.memory[i] = word(buffer[i*2])<<8 | word(buffer[i*2+1])
+		this.Memory[i] = word(buffer[i*2])<<8 | word(buffer[i*2+1])
 	}
 	return nil
 }
 
 func (this *DCPU16) Run() {
 	for {
-		this.executeCycle()
+		this.ExecuteCycle()
 	}
 }
 
@@ -69,9 +69,9 @@ func (this *DCPU16) Cycles() uint {
 	return this.cycles
 }
 
-func (this *DCPU16) executeCycle() {
-	operation := this.memory[this.pc]
-	this.pc++
+func (this *DCPU16) ExecuteCycle() {
+	operation := this.Memory[this.PC]
+	this.PC++
 	opcode := operation & 0xF
 	v1 := operation >> 4 & 0x3F
 	v2 := operation >> 10
@@ -101,14 +101,14 @@ func (this *DCPU16) executeCycle() {
 func (this *DCPU16) resolve(what word) *word {
 	switch {
 	case what < 0x08: // Register
-		return &this.registers[what]
+		return &this.Registers[what]
 	case what < 0x0f: // [Register]
 		this.cycles++
-		return &this.memory[this.registers[what-0x08]]
+		return &this.Memory[this.Registers[what-0x08]]
 	case what < 0x18: // [Register + word]
 		this.cycles++
-		value := &this.memory[this.registers[what-0x0f]+this.memory[this.pc]]
-		this.pc++
+		value := &this.Memory[this.Registers[what-0x0f]+this.Memory[this.PC]]
+		this.PC++
 		return value
 	case what > 0x1f: // Immediate byte
 		// Have to use a variable because we return a pointer.
@@ -117,30 +117,30 @@ func (this *DCPU16) resolve(what word) *word {
 	}
 	switch what {
 	case 0x18: // Pop
-		value := &this.memory[this.sp]
-		this.sp++
+		value := &this.Memory[this.SP]
+		this.SP++
 		return value
 	case 0x19: // Peek
-		return &this.memory[this.sp]
+		return &this.Memory[this.SP]
 	case 0x1a: // Push
-		this.sp--
-		return &this.memory[this.sp]
+		this.SP--
+		return &this.Memory[this.SP]
 	case 0x1b:
-		return &this.sp
+		return &this.SP
 	case 0x1c:
-		return &this.pc
+		return &this.PC
 	case 0x1d:
-		return &this.o
+		return &this.O
 	case 0x1e:
 		this.cycles++
-		value := &this.memory[this.memory[this.pc]]
-		this.pc++
+		value := &this.Memory[this.Memory[this.PC]]
+		this.PC++
 		return value
 	case 0x1f:
-		// Can't assign to this, so take a pointer to a useless variable instead of memory.
+		// Can't assign to this, so take a pointer to a useless variable instead of Memory.
 		this.cycles++
-		value := this.memory[this.pc]
-		this.pc++
+		value := this.Memory[this.PC]
+		this.PC++
 		return &value
 	}
 	panic("Invalid value passed to resolve")
@@ -148,6 +148,6 @@ func (this *DCPU16) resolve(what word) *word {
 
 func (this *DCPU16) skipValue(what word) {
 	if (what >= 0x0f && what < 0x18) || what == 0x1e || what == 0x1f {
-		this.pc++
+		this.PC++
 	}
 }

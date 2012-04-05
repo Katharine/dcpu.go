@@ -20,10 +20,10 @@ func TestSpecSample(t *testing.T) {
 
 	// Do the run loop ourselves, since we know we're going to hang.
 	for i := 0; i < 1000; i++ {
-		cpu.executeCycle()
+		cpu.ExecuteCycle()
 	}
 
-	if cpu.registers[X] != 0x40 {
+	if cpu.Registers[X] != 0x40 {
 		t.Error("X is not 0x40.")
 	}
 }
