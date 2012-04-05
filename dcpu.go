@@ -43,7 +43,7 @@ func New() *DCPU16 {
 }
 
 // Loads a memory image from a file on disk. Memory images are assumed to start from address
-// zero. Anything beyond the loaded image will contain its old contents.
+// zero. Anything beyond the loaded image will be zeroed.
 func (this *DCPU16) LoadImage(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -54,7 +54,7 @@ func (this *DCPU16) LoadImage(filename string) error {
 }
 
 // Loads a memory image from an io.Reader. Memory images are assumed to start from address
-// zero. Anything beyond the loaded image will contain its old contents.
+// zero. Anything beyond the loaded image will be zeroed.
 func (this *DCPU16) LoadStream(f io.Reader) error {
 	buffer := make([]byte, 0x20000)
 
